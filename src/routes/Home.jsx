@@ -18,6 +18,7 @@ import {
   getDocs,
   orderBy,
   limit,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useEffect, useState } from "react";
@@ -29,17 +30,18 @@ function Home() {
   /*
   useEffect로 데이터를 조회, 결과를 변수명 comments 할당
   */
-  const getCommnets = async () => {
+  const getComments = () => {
     const q = query(collection(db, "comments"), orderBy("date", "desc"), limit(5));
 
-    const querySnapshot = await getDocs(q);
-    console.log(querySnapshot);
-    const commentsArray = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setComments(commentsArray);
+    onSnapshot(q, querySnapshot => {
+      const commentsArray = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      setComments(commentsArray);
+    });
   };
 
   useEffect(() => {
-    getCommnets();
+    getComments();
   }, []);
 
   const handleChange = e => {
@@ -55,7 +57,7 @@ function Home() {
         date: serverTimestamp(),
       });
       setComment("");
-      getCommnets();
+      // getCommnets();
     } catch (e) {
       console.log("글 추가 시 에러가 발생했습니다", e);
     }
@@ -89,7 +91,10 @@ function Home() {
         {/* comments 배열의 값을 ListItem으로 출격 */}
         {comments.map(item => (
           <ListItem key={item.id} alignItems="flex-start" divider>
-            <ListItemText primary={item.comment} secondary={item.date.toDate().toLocaleString()} />
+            <ListItemText
+              primary={item.comment}
+              secondary={item.date?.toDate ? item.date.toDate().toLocaleString() : "작성시간 없음"}
+            />
           </ListItem>
         ))}
       </List>
