@@ -102,7 +102,7 @@ function Auth() {
           name="email"
           variant="outlined"
           onChange={handleChange}
-          ref={emailRef}
+          inputRef={emailRef}
           value={form.email}
         />
         <TextField
@@ -130,7 +130,7 @@ function Auth() {
 
         <Divider sx={{ mt: 3 }} />
 
-        <Button sx={{ mt: 2 }} type="submit" variant="contained" onClick={onGoogleSignIn}>
+        <Button sx={{ mt: 2 }} type="button" variant="contained" onClick={onGoogleSignIn}>
           {newAccount ? "구글로 회원가입" : "구글로 로그인"}
         </Button>
 
