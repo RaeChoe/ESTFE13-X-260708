@@ -21,7 +21,9 @@ import {
   limit,
   onSnapshot,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, storageService } from "../firebase";
+import { ref, uploadString } from "firebase/storage";
+import { v4 as uuidv4 } from "uuid";
 import { useEffect, useState, useRef } from "react";
 import Comment from "../components/Comment";
 
@@ -30,6 +32,9 @@ function Home({ userId }) {
   const [comments, setComments] = useState([]);
   const [attachment, setAttachment] = useState(null);
   const fileInputRef = useRef(null);
+
+  const storage = storageService; //storage 초기화
+  const storageRef = ref(storage); //참조 초기화
 
   /*
   useEffect로 데이터를 조회, 결과를 변수명 comments 할당
@@ -54,21 +59,30 @@ function Home({ userId }) {
 
   const onSubmit = async e => {
     e.preventDefault();
-    try {
-      const docRef = await addDoc(collection(db, "comments"), {
-        // comment: comment,
-        comment,
-        date: serverTimestamp(),
-        uid: userId,
-      });
-      setComment("");
-      // getCommnets();
-    } catch (e) {
-      console.log("글 추가 시 에러가 발생했습니다", e);
-    }
+    //***.com/uploads/사용자id/uuid생성된id.jpg
+    const storageRef = ref(storage, `${userId}/${uuidv4()}`);
+
+    //attachment: 이미지 정보 텍스트로 변경한 변수
+    uploadString(storageRef, attachment, "data_url").then(snapshot => {
+      console.log("파일 업로드 완료");
+    });
+
+    // try {
+    //   const docRef = await addDoc(collection(db, "comments"), {
+    //     // comment: comment,
+    //     comment,
+    //     date: serverTimestamp(),
+    //     uid: userId,
+    //   });
+    //   setComment("");
+    //   // getCommnets();
+    // } catch (e) {
+    //   console.log("글 추가 시 에러가 발생했습니다", e);
+    // }
   };
 
   const onFileChange = e => {
+    // 이미지 정보 텍스트로 변경
     const file = e.target.files[0];
 
     const reader = new FileReader();
@@ -107,7 +121,13 @@ function Home({ userId }) {
         <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
           <Button component="label" type="button" variant="outlined" startIcon={<UploadFileIcon />}>
             이미지 선택
-            <input type="file" inputref={fileInputRef} accept="image/*" onChange={onFileChange} />
+            <input
+              type="file"
+              hidden
+              inputref={fileInputRef}
+              accept="image/*"
+              onChange={onFileChange}
+            />
           </Button>
           {attachment && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
