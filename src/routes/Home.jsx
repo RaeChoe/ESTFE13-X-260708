@@ -22,7 +22,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db, storageService } from "../firebase";
-import { ref, uploadString } from "firebase/storage";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useState, useRef } from "react";
 import Comment from "../components/Comment";
@@ -59,26 +59,29 @@ function Home({ userId }) {
 
   const onSubmit = async e => {
     e.preventDefault();
-    //***.com/uploads/사용자id/uuid생성된id.jpg
-    const storageRef = ref(storage, `${userId}/${uuidv4()}`);
-
-    //attachment: 이미지 정보 텍스트로 변경한 변수
-    uploadString(storageRef, attachment, "data_url").then(snapshot => {
-      console.log("파일 업로드 완료");
-    });
-
-    // try {
-    //   const docRef = await addDoc(collection(db, "comments"), {
-    //     // comment: comment,
-    //     comment,
-    //     date: serverTimestamp(),
-    //     uid: userId,
-    //   });
-    //   setComment("");
-    //   // getCommnets();
-    // } catch (e) {
-    //   console.log("글 추가 시 에러가 발생했습니다", e);
-    // }
+    try {
+      let imageURL = null;
+      if (attachment) {
+        //첨부파일이 있으면, attachment: 이미지 정보 텍스트로 변경한 변수
+        //***.com/uploads/사용자id/uuid생성된id.jpg
+        const storageRef = ref(storage, `${userId}/${uuidv4()}`);
+        const snapshot = await uploadString(storageRef, attachment, "data_url");
+        imageURL = await getDownloadURL(storageRef); //이미지 절대경로 할당
+      }
+      const data = {
+        // comment: comment,
+        comment,
+        date: serverTimestamp(),
+        uid: userId,
+        image: imageURL,
+      };
+      const docRef = await addDoc(collection(db, "comments"), data); //firestore에 글저장
+      setComment("");
+      // getCommnets();
+      onClearFile();
+    } catch (e) {
+      console.log("글 추가 시 에러가 발생했습니다", e);
+    }
   };
 
   const onFileChange = e => {
